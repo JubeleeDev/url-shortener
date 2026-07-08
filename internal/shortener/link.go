@@ -5,8 +5,8 @@ type Link struct {
 	Code        string
 }
 
-func NewLink(originalURL string, codeLenght int) (Link, error) {
-	code, err := GenerateCode(codeLenght)
+func NewLink(originalURL string, codeLength int) (Link, error) {
+	code, err := GenerateCode(codeLength)
 
 	if err != nil {
 		return Link{}, err

@@ -2,7 +2,7 @@ package shortener
 
 import "testing"
 
-func TestCreateLinkWithValidCredentials(t *testing.T) {
+func TestNewLinkCreatesLink(t *testing.T) {
 	originalURL := "https://google.com/"
 	length := 19
 
@@ -13,15 +13,15 @@ func TestCreateLinkWithValidCredentials(t *testing.T) {
 	}
 
 	if link.OriginalURL != originalURL {
-		t.Errorf("original url is %v, after created code got %v", originalURL, link.OriginalURL)
+		t.Errorf("expected original url %v, got %v", originalURL, link.OriginalURL)
 	}
 
 	if len(link.Code) != length {
-		t.Errorf("original length is %d, got %d", length, len(link.Code))
+		t.Errorf("expected code length %d, got %d", length, len(link.Code))
 	}
 }
 
-func TestCreateLinkWithInvalidCredentials(t *testing.T) {
+func TestNewLinkReturnsErrorForInvalidLength(t *testing.T) {
 	originalURL := "https://google.com/"
 	length := 0
 
@@ -30,5 +30,4 @@ func TestCreateLinkWithInvalidCredentials(t *testing.T) {
 	if err == nil {
 		t.Errorf("expected error, got nil")
 	}
-
 }
