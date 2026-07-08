@@ -17,19 +17,19 @@ func TestGenerateCodeReturnsRequestedLength(t *testing.T) {
 
 func TestGenerateCodeReturnsErrorForInvalidLength(t *testing.T) {
 	cases := []struct {
-		name  string
-		input int
+		name   string
+		length int
 	}{
-		{name: "zero", input: 0},
-		{name: "negative", input: -3},
+		{name: "zero", length: 0},
+		{name: "negative", length: -3},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := GenerateCode(tc.input)
+			_, err := GenerateCode(tc.length)
 
 			if err == nil {
-				t.Error("Excpected error, got nil")
+				t.Error("expected error, got nil")
 			}
 		})
 	}
