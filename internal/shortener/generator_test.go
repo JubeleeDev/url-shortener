@@ -15,18 +15,22 @@ func TestGenerateCodeReturnsRequestedLength(t *testing.T) {
 
 }
 
-func TestGenerateCodeReturnsErrorForZeroLength(t *testing.T) {
-	_, err := GenerateCode(0)
-
-	if err == nil {
-		t.Errorf("expected error, got nil")
+func TestGenerateCodeReturnsErrorForInvalidLength(t *testing.T) {
+	cases := []struct {
+		name  string
+		input int
+	}{
+		{name: "zero", input: 0},
+		{name: "negative", input: -3},
 	}
-}
 
-func TestGenerateCodeReturnsErrorForNegativeLength(t *testing.T) {
-	_, err := GenerateCode(-3)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := GenerateCode(tc.input)
 
-	if err == nil {
-		t.Errorf("expected error, got nil")
+			if err == nil {
+				t.Error("Excpected error, got nil")
+			}
+		})
 	}
 }
