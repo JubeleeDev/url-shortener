@@ -33,13 +33,13 @@ func TestNewLinkReturnsErrorForInvalidLength(t *testing.T) {
 }
 
 func TestLinkPathReturnsCodeWithLeadingSlash(t *testing.T) {
-
 	link := Link{
 		Code: "abc123",
 	}
+	want := "/abc123"
+	got := link.Path()
 
-	if link.Path() != "/"+link.Code {
-		t.Errorf("expected link path /%v, got %v", link.Code, link.Path())
+	if got != want {
+		t.Errorf("expected link path %v, got %v", want, got)
 	}
-
 }
