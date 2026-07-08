@@ -5,6 +5,10 @@ type Link struct {
 	Code        string
 }
 
+func (l Link) Path() string {
+	return "/" + l.Code
+}
+
 func NewLink(originalURL string, codeLength int) (Link, error) {
 	code, err := GenerateCode(codeLength)
 
