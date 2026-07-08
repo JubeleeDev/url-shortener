@@ -39,7 +39,7 @@ func TestLinkPathReturnsCodeWithLeadingSlash(t *testing.T) {
 	}
 
 	if link.Path() != "/"+link.Code {
-		t.Errorf("expected link path /%v, got %v", "/"+link.Code, link.Path())
+		t.Errorf("expected link path /%v, got %v", link.Code, link.Path())
 	}
 
 }
