@@ -10,7 +10,7 @@ func TestGenerateCodeReturnsRequestedLength(t *testing.T) {
 	}
 
 	if len(code) != 5 {
-		t.Errorf("expected code length = 5, got %d", len(code))
+		t.Errorf("expected code length 5, got %d", len(code))
 	}
 
 }
