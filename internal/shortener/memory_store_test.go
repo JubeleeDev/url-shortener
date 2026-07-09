@@ -10,28 +10,26 @@ func TestMemoryStoreSaveAndFind(t *testing.T) {
 	}
 	store.Save(link)
 
-	foundedLink, ok := store.Find(link.Code)
+	foundLink, ok := store.Find(link.Code)
 	if !ok {
 		t.Fatal("expected founded link, got empty")
 	}
 
-	if link.Code != foundedLink.Code {
-		t.Errorf("expected founded link code == abc123, got %v", foundedLink.Code)
+	if link.Code != foundLink.Code {
+		t.Errorf("expected founded link code %v, got %v", link.Code, foundLink.Code)
 	}
 
-	if link.OriginalURL != foundedLink.OriginalURL {
-		t.Errorf("expected founded link original URL == https://example.com, got %v", foundedLink.OriginalURL)
+	if link.OriginalURL != foundLink.OriginalURL {
+		t.Errorf("expected founded link original URL %v, got %v", link.OriginalURL, foundLink.OriginalURL)
 	}
 }
 
 func TestMemoryStoreFindReturnsFalseForUnknownCode(t *testing.T) {
 	store := NewMemoryStore()
 
-	emptyLink := Link{}
-
-	_, ok := store.Find(emptyLink.Code)
+	_, ok := store.Find("missing")
 
 	if ok {
-		t.Error("expected error, got founded link")
+		t.Error("expected false, got true")
 	}
 }

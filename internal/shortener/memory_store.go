@@ -14,10 +14,5 @@ func (s *MemoryStore) Save(link Link) {
 
 func (s *MemoryStore) Find(code string) (Link, bool) {
 	value, ok := s.links[code]
-
-	if !ok {
-		return Link{}, false
-	}
-
-	return value, true
+	return value, ok
 }
