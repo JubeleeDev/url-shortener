@@ -22,3 +22,16 @@ func (s *Service) CreateLink(originalUrl string) (*Link, error) {
 	return &link, nil
 
 }
+
+func (s *Service) GetLink(code string) (*Link, bool) {
+	if len(code) == 0 {
+		return nil, false
+	}
+
+	link, ok := s.memory.Find(code)
+	if !ok {
+		return nil, false
+	}
+
+	return link, true
+}

@@ -54,3 +54,40 @@ func TestCreateLinkInvalidLength(t *testing.T) {
 		t.Error("expect empty links in mem, got links with elements")
 	}
 }
+
+func TestGetLinkValidCode(t *testing.T) {
+	url := "https://google.com/"
+	length := 15
+
+	mem := NewMemoryStore()
+	serv := NewService(mem, length)
+
+	link, err := serv.CreateLink(url)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	got, ok := serv.GetLink(link.Code)
+
+	if !ok {
+		t.Fatal("already created link not found by code")
+	}
+
+	if *got != *link {
+		t.Errorf("created and found links are different")
+	}
+
+}
+
+func TestGetLinkInvalidCode(t *testing.T) {
+	length := 15
+
+	mem := NewMemoryStore()
+	serv := NewService(mem, length)
+	_, ok := serv.GetLink("missing")
+
+	if ok {
+		t.Fatal("expected not found with invalid code, got link")
+	}
+}
