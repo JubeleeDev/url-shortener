@@ -79,3 +79,21 @@ func (h *Handler) GetLink(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(&resp)
 }
+
+func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
+	code := r.PathValue("code")
+
+	if code == "" {
+		http.Error(w, "code is empty", http.StatusBadRequest)
+		return
+	}
+
+	link, ok := h.service.GetLink(code)
+
+	if !ok {
+		http.Error(w, "link not found", http.StatusNotFound)
+		return
+	}
+
+	http.Redirect(w, r, link.OriginalURL, http.StatusFound)
+}

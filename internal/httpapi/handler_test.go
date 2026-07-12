@@ -1,28 +1,42 @@
-package main
+package httpapi
 
 import (
-	"fmt"
 	"net/http"
+	"testing"
 
 	"github.com/JubeleeDev/url-shortener/internal/httpapi"
 	"github.com/JubeleeDev/url-shortener/internal/shortener"
 )
 
-func main() {
+func TestHandlerSuccessCreateLink(t *testing.T) {
+
+}
+func TestHandlerUnsuccessCreateLink(t *testing.T) {
+
+}
+func TestHandlerSuccessGetLink(t *testing.T) {
+
+}
+func TestHandlerGetLinkMissingCode(t *testing.T) {
+
+}
+func TestHandlerSuccessRedirect(t *testing.T) {
+
+}
+func TestHandlerRedirectMissingLink(t *testing.T) {
+
+}
+
+func initializeServeMux() *http.ServeMux {
+
 	store := shortener.NewMemoryStore()
 	service := shortener.NewService(store, 8)
 
 	h := httpapi.NewHandler(service)
 
 	mux := http.NewServeMux()
-
 	mux.HandleFunc("POST /api/links", h.CreateLink)
 	mux.HandleFunc("GET /api/links/{code}", h.GetLink)
 	mux.HandleFunc("GET /{code}", h.Redirect)
 
-	fmt.Println("server is running at 8080")
-	err := http.ListenAndServe(":8080", mux)
-	if err != nil {
-		fmt.Println("unexpected error:", err)
-	}
 }
