@@ -1,24 +1,17 @@
 package main
 
 import (
-	"fmt"
+	"net/http"
 
+	"github.com/JubeleeDev/url-shortener/internal/httpapi"
 	"github.com/JubeleeDev/url-shortener/internal/shortener"
 )
 
-func printCode(length int) {
-	code, err := shortener.GenerateCode(length)
-	if err != nil {
-		fmt.Println("failed to generate code:", err)
-		return
-	}
-
-	fmt.Println("generated code:", code)
-}
-
 func main() {
-	printCode(15)
-	printCode(0)
-	printCode(5)
-	printCode(-3)
+	store := shortener.NewMemoryStore()
+	service := shortener.NewService(store, 8)
+	h := httpapi.NewHandler(service)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/links", h.CreateLink)
+	http.ListenAndServe(":8080", mux)
 }
