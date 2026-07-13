@@ -1,6 +1,9 @@
 package shortener
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestSuccessCreateLink(t *testing.T) {
 	url := "https://google.com/"
@@ -40,14 +43,15 @@ func TestSuccessCreateLink(t *testing.T) {
 func TestCreateLinkErrors(t *testing.T) {
 
 	cases := []struct {
-		name   string
-		url    string
-		length int
+		name    string
+		url     string
+		length  int
+		wantErr error
 	}{
-		{name: "invalid_length", url: "https://google.com/", length: 0},
-		{name: "invalid_url", url: "not-a-url", length: 5},
-		{name: "empty_url", url: "", length: 4},
-		{name: "invalid_schema", url: "ftp://example.com", length: 5},
+		{name: "invalid_length", url: "https://google.com/", length: 0, wantErr: ErrInvalidCodeLength},
+		{name: "invalid_url", url: "not-a-url", length: 5, wantErr: ErrInvalidURL},
+		{name: "empty_url", url: "", length: 4, wantErr: ErrInvalidURL},
+		{name: "invalid_schema", url: "ftp://example.com", length: 5, wantErr: ErrInvalidURL},
 	}
 
 	for _, tc := range cases {
@@ -58,8 +62,8 @@ func TestCreateLinkErrors(t *testing.T) {
 
 			_, err := serv.CreateLink(tc.url)
 
-			if err == nil {
-				t.Fatalf("expect error, got nil")
+			if !errors.Is(err, tc.wantErr) {
+				t.Errorf("expect err %v, got %v", tc.wantErr, err)
 			}
 
 			if len(mem.links) != 0 {

@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/JubeleeDev/url-shortener/internal/shortener"
@@ -38,8 +39,16 @@ func (h *Handler) CreateLink(w http.ResponseWriter, r *http.Request) {
 	link, err := h.service.CreateLink(req.URL)
 
 	if err != nil {
-		http.Error(w, "link was not created", http.StatusBadRequest)
-		return
+		if errors.Is(err, shortener.ErrInvalidURL) {
+			http.Error(w, "invalid url", http.StatusBadRequest)
+			return
+		} else if errors.Is(err, shortener.ErrInvalidCodeLength) {
+			http.Error(w, "invalid code length", http.StatusInternalServerError)
+			return
+		} else {
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	resp := linkResponse{

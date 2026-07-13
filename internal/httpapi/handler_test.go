@@ -61,7 +61,7 @@ func TestHandlerFailedCreateLink(t *testing.T) {
 	})
 
 	t.Run("zero_code_length", func(t *testing.T) {
-		body := strings.NewReader(`{"url": "https:/google.com/"}`)
+		body := strings.NewReader(`{"url": "https://google.com/"}`)
 		req := httptest.NewRequest(http.MethodPost, "/api/links", body)
 		req.Header.Set("Content-Type", "application/json")
 
@@ -70,8 +70,8 @@ func TestHandlerFailedCreateLink(t *testing.T) {
 		mux := initializeServeMux(0)
 		mux.ServeHTTP(rr, req)
 
-		if rr.Code != http.StatusBadRequest {
-			t.Errorf("Expected status Bad request (code length = 0), got %v", rr.Code)
+		if rr.Code != http.StatusInternalServerError {
+			t.Errorf("Expected status internal server error (code length = 0), got %v", rr.Code)
 		}
 	})
 

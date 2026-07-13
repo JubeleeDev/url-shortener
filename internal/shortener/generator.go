@@ -27,7 +27,7 @@ func getRandomAlphabetChar() string {
 
 func GenerateCode(length int) (string, error) {
 	if !isValidCodeLength(length) {
-		return "", fmt.Errorf("code length must be positive, got %d", length)
+		return "", fmt.Errorf("error: %w", ErrInvalidCodeLength)
 	}
 
 	result := ""

@@ -24,14 +24,14 @@ func (s *Service) CreateLink(originalUrl string) (*Link, error) {
 	u, err := url.ParseRequestURI(originalUrl)
 
 	if err != nil {
-		return nil, fmt.Errorf("invalid url: %w", err)
+		return nil, fmt.Errorf("error: %w", ErrInvalidURL)
 	}
 
 	if u.Scheme != "http" && u.Scheme != "https" {
-		return nil, fmt.Errorf("invalid request scheme")
+		return nil, ErrInvalidURL
 	}
 	if u.Host == "" {
-		return nil, fmt.Errorf("host is empty")
+		return nil, ErrInvalidURL
 	}
 
 	link, err := NewLink(originalUrl, s.codeLength)
