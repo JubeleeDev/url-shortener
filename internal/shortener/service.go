@@ -6,12 +6,17 @@ import (
 )
 
 type Service struct {
-	memory     *MemoryStore
+	store      Store
 	codeLength int
 }
 
-func NewService(mem *MemoryStore, codeLen int) *Service {
-	return &Service{memory: mem, codeLength: codeLen}
+type Store interface {
+	Save(link Link)
+	Find(code string) (*Link, bool)
+}
+
+func NewService(store Store, codeLen int) *Service {
+	return &Service{store: store, codeLength: codeLen}
 }
 
 func (s *Service) CreateLink(originalUrl string) (*Link, error) {
@@ -35,7 +40,7 @@ func (s *Service) CreateLink(originalUrl string) (*Link, error) {
 		return nil, err
 	}
 
-	s.memory.Save(link)
+	s.store.Save(link)
 
 	return &link, nil
 
@@ -46,7 +51,7 @@ func (s *Service) GetLink(code string) (*Link, bool) {
 		return nil, false
 	}
 
-	link, ok := s.memory.Find(code)
+	link, ok := s.store.Find(code)
 	if !ok {
 		return nil, false
 	}
