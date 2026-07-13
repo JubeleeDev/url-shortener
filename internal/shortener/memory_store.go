@@ -1,7 +1,10 @@
 package shortener
 
+import "sync"
+
 type MemoryStore struct {
 	links map[string]Link
+	mu    sync.Mutex
 }
 
 func NewMemoryStore() *MemoryStore {
@@ -9,10 +12,14 @@ func NewMemoryStore() *MemoryStore {
 }
 
 func (s *MemoryStore) Save(link Link) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.links[link.Code] = link
 }
 
 func (s *MemoryStore) Find(code string) (*Link, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	value, ok := s.links[code]
 	return &value, ok
 }

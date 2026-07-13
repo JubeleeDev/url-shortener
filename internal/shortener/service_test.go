@@ -37,22 +37,37 @@ func TestSuccessCreateLink(t *testing.T) {
 	}
 }
 
-func TestCreateLinkInvalidLength(t *testing.T) {
-	url := "https://google.com/"
-	length := 0
+func TestCreateLinkErrors(t *testing.T) {
 
-	mem := NewMemoryStore()
-	serv := NewService(mem, length)
-
-	_, err := serv.CreateLink(url)
-
-	if err == nil {
-		t.Fatalf("expect error, got nil")
+	cases := []struct {
+		name   string
+		url    string
+		length int
+	}{
+		{name: "invalid_length", url: "https://google.com/", length: 0},
+		{name: "invalid_url", url: "not-a-url", length: 5},
+		{name: "empty_url", url: "", length: 4},
+		{name: "invalid_schema", url: "ftp://example.com", length: 5},
 	}
 
-	if len(mem.links) != 0 {
-		t.Error("expect empty links in mem, got links with elements")
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+
+			mem := NewMemoryStore()
+			serv := NewService(mem, tc.length)
+
+			_, err := serv.CreateLink(tc.url)
+
+			if err == nil {
+				t.Fatalf("expect error, got nil")
+			}
+
+			if len(mem.links) != 0 {
+				t.Error("expect empty links in mem, got links with elements")
+			}
+		})
 	}
+
 }
 
 func TestGetLinkValidCode(t *testing.T) {
