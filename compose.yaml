@@ -1,0 +1,11 @@
+services:
+  url-shortener:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - HTTP_ADDR=:8080
+      - CODE_LENGTH=15
+    ports:
+      - "8080:8080"
+    
