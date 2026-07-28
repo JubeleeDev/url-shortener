@@ -1,6 +1,8 @@
 package shortener
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestMemoryStoreSaveAndFind(t *testing.T) {
 	store := NewMemoryStore()
@@ -8,11 +10,15 @@ func TestMemoryStoreSaveAndFind(t *testing.T) {
 		Code:        "abc123",
 		OriginalURL: "https://example.com",
 	}
-	store.Save(link)
+	err := store.Save(t.Context(), link)
 
-	foundLink, ok := store.Find(link.Code)
-	if !ok {
-		t.Fatal("expected link to be found")
+	if err != nil {
+		t.Fatalf("got an unexpected error %v", err)
+	}
+
+	foundLink, err := store.Find(t.Context(), link.Code)
+	if err != nil {
+		t.Fatalf("expected link to be found, got %v", err)
 	}
 
 	if link.Code != foundLink.Code {
@@ -24,12 +30,12 @@ func TestMemoryStoreSaveAndFind(t *testing.T) {
 	}
 }
 
-func TestMemoryStoreFindReturnsFalseForUnknownCode(t *testing.T) {
+func TestMemoryStoreFindLinkByUnknownCode(t *testing.T) {
 	store := NewMemoryStore()
 
-	_, ok := store.Find("missing")
+	_, err := store.Find(t.Context(), "missing")
 
-	if ok {
-		t.Error("expected false, got true")
+	if err != nil {
+		t.Error("expected error, got link")
 	}
 }

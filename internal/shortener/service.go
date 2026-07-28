@@ -1,6 +1,7 @@
 package shortener
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 )
@@ -11,15 +12,15 @@ type Service struct {
 }
 
 type Store interface {
-	Save(link Link)
-	Find(code string) (*Link, bool)
+	Save(ctx context.Context, link Link) error
+	Find(ctx context.Context, code string) (*Link, error)
 }
 
 func NewService(store Store, codeLen int) *Service {
 	return &Service{store: store, codeLength: codeLen}
 }
 
-func (s *Service) CreateLink(originalUrl string) (*Link, error) {
+func (s *Service) CreateLink(ctx context.Context, originalUrl string) (*Link, error) {
 
 	u, err := url.ParseRequestURI(originalUrl)
 
@@ -40,21 +41,22 @@ func (s *Service) CreateLink(originalUrl string) (*Link, error) {
 		return nil, err
 	}
 
-	s.store.Save(link)
+	err = s.store.Save(ctx, link)
+
+	if err != nil {
+		return nil, err
+	}
 
 	return &link, nil
 
 }
 
-func (s *Service) GetLink(code string) (*Link, bool) {
-	if len(code) == 0 {
-		return nil, false
+func (s *Service) GetLink(ctx context.Context, code string) (*Link, error) {
+
+	link, err := s.store.Find(ctx, code)
+	if err != nil {
+		return nil, err
 	}
 
-	link, ok := s.store.Find(code)
-	if !ok {
-		return nil, false
-	}
-
-	return link, true
+	return link, nil
 }

@@ -12,7 +12,7 @@ func TestSuccessCreateLink(t *testing.T) {
 	mem := NewMemoryStore()
 	serv := NewService(mem, length)
 
-	link, err := serv.CreateLink(url)
+	link, err := serv.CreateLink(t.Context(), url)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -30,9 +30,9 @@ func TestSuccessCreateLink(t *testing.T) {
 		t.Errorf("expected len code %d, got %d", length, len(link.Code))
 	}
 
-	got, ok := mem.Find(link.Code)
-	if !ok {
-		t.Errorf("expected link with code %v, got not found", link.Code)
+	got, err := mem.Find(t.Context(), link.Code)
+	if err != nil {
+		t.Errorf("expected link with code %v, got error %v", link.Code, err)
 	}
 
 	if *got != *link {
@@ -60,7 +60,7 @@ func TestCreateLinkErrors(t *testing.T) {
 			mem := NewMemoryStore()
 			serv := NewService(mem, tc.length)
 
-			_, err := serv.CreateLink(tc.url)
+			_, err := serv.CreateLink(t.Context(), tc.url)
 
 			if !errors.Is(err, tc.wantErr) {
 				t.Errorf("expect err %v, got %v", tc.wantErr, err)
@@ -81,16 +81,16 @@ func TestGetLinkValidCode(t *testing.T) {
 	mem := NewMemoryStore()
 	serv := NewService(mem, length)
 
-	link, err := serv.CreateLink(url)
+	link, err := serv.CreateLink(t.Context(), url)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	got, ok := serv.GetLink(link.Code)
+	got, err := serv.GetLink(t.Context(), link.Code)
 
-	if !ok {
-		t.Fatal("already created link not found by code")
+	if err != nil {
+		t.Fatalf("expect found link, got error %v", err)
 	}
 
 	if *got != *link {
@@ -104,9 +104,9 @@ func TestGetLinkInvalidCode(t *testing.T) {
 
 	mem := NewMemoryStore()
 	serv := NewService(mem, length)
-	_, ok := serv.GetLink("missing")
+	_, err := serv.GetLink(t.Context(), "missing")
 
-	if ok {
+	if err == nil {
 		t.Fatal("expected not found with invalid code, got link")
 	}
 }
