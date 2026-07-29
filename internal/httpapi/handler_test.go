@@ -185,7 +185,7 @@ func TestHandlerRedirectMissingLink(t *testing.T) {
 func initializeServeMux(length int) *http.ServeMux {
 
 	store := shortener.NewMemoryStore()
-	service := shortener.NewService(store, length)
+	service := shortener.NewService(store, length, &shortener.MemoryCache{})
 
 	h := NewHandler(service)
 

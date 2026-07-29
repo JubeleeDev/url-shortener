@@ -10,6 +10,7 @@ import (
 type Service struct {
 	store      Store
 	codeLength int
+	cache      Cache
 }
 
 type Store interface {
@@ -17,11 +18,18 @@ type Store interface {
 	Find(ctx context.Context, code string) (*Link, error)
 }
 
-func NewService(store Store, codeLen int) *Service {
-	return &Service{store: store, codeLength: codeLen}
+type Cache interface {
+	Get(ctx context.Context, code string) (string, error)
+	Set(ctx context.Context, code string, url string, ttl int) error
+	Delete(ctx context.Context, code string) error
+}
+
+func NewService(store Store, codeLen int, cache Cache) *Service {
+	return &Service{store: store, codeLength: codeLen, cache: cache}
 }
 
 const maxSaveRetries = 5
+const ttlSeconds = 3600
 
 func (s *Service) CreateLink(ctx context.Context, originalUrl string) (*Link, error) {
 
@@ -57,6 +65,8 @@ func (s *Service) CreateLink(ctx context.Context, originalUrl string) (*Link, er
 			}
 			return nil, err
 		}
+		_ = s.cache.Set(ctx, link.Code, link.OriginalURL, ttlSeconds)
+
 		return &link, nil
 	}
 
@@ -65,10 +75,18 @@ func (s *Service) CreateLink(ctx context.Context, originalUrl string) (*Link, er
 
 func (s *Service) GetLink(ctx context.Context, code string) (*Link, error) {
 
+	url, err := s.cache.Get(ctx, code)
+
+	if err == nil {
+		return &Link{Code: code, OriginalURL: url}, nil
+	}
+
 	link, err := s.store.Find(ctx, code)
 	if err != nil {
 		return nil, err
 	}
+
+	_ = s.cache.Set(ctx, code, link.OriginalURL, ttlSeconds)
 
 	return link, nil
 }

@@ -10,7 +10,7 @@ func TestSuccessCreateLink(t *testing.T) {
 	length := 15
 
 	mem := NewMemoryStore()
-	serv := NewService(mem, length)
+	serv := NewService(mem, length, &MemoryCache{})
 
 	link, err := serv.CreateLink(t.Context(), url)
 
@@ -58,7 +58,7 @@ func TestCreateLinkErrors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 
 			mem := NewMemoryStore()
-			serv := NewService(mem, tc.length)
+			serv := NewService(mem, tc.length, &MemoryCache{})
 
 			_, err := serv.CreateLink(t.Context(), tc.url)
 
@@ -79,7 +79,7 @@ func TestGetLinkValidCode(t *testing.T) {
 	length := 15
 
 	mem := NewMemoryStore()
-	serv := NewService(mem, length)
+	serv := NewService(mem, length, &MemoryCache{})
 
 	link, err := serv.CreateLink(t.Context(), url)
 
@@ -103,7 +103,7 @@ func TestGetLinkInvalidCode(t *testing.T) {
 	length := 15
 
 	mem := NewMemoryStore()
-	serv := NewService(mem, length)
+	serv := NewService(mem, length, &MemoryCache{})
 	_, err := serv.GetLink(t.Context(), "missing")
 
 	if err == nil {

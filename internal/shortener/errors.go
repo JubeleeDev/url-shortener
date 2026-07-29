@@ -7,4 +7,5 @@ var (
 	ErrInvalidCodeLength = errors.New("invalid code length")
 	ErrNotFound          = errors.New("not found")
 	ErrUniqueConflict    = errors.New("unique code conflict")
+	ErrCacheMiss         = errors.New("cache miss")
 )

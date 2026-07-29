@@ -7,9 +7,10 @@ import (
 )
 
 type Config struct {
-	HTTPAddr   string
-	CodeLength int
-	DSN        string
+	HTTPAddr     string
+	CodeLength   int
+	DSN          string
+	RedisAddress string
 }
 
 func Load() (Config, error) {
@@ -37,5 +38,10 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("DATABASE_URL is empty")
 	}
 
-	return Config{CodeLength: codeLength, HTTPAddr: addr, DSN: dsn}, nil
+	redisAddr := os.Getenv("REDIS_ADDRESS")
+	if redisAddr == "" {
+		return Config{}, fmt.Errorf("REDIS_ADDRESS is empty")
+	}
+
+	return Config{CodeLength: codeLength, HTTPAddr: addr, DSN: dsn, RedisAddress: redisAddr}, nil
 }

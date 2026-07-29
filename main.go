@@ -6,9 +6,11 @@ import (
 	"net/http"
 
 	"github.com/JubeleeDev/url-shortener/db"
+	"github.com/JubeleeDev/url-shortener/internal/cache"
 	"github.com/JubeleeDev/url-shortener/internal/config"
 	"github.com/JubeleeDev/url-shortener/internal/httpapi"
 	"github.com/JubeleeDev/url-shortener/internal/shortener"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -28,7 +30,13 @@ func main() {
 
 	// store := shortener.NewMemoryStore()
 	store := shortener.NewPostgresStore(pool)
-	service := shortener.NewService(store, cfg.CodeLength)
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     cfg.RedisAddress, // Redis server address
+		Password: "",               // No password by default
+		DB:       0,                // Use default database ID 0
+	})
+	cache := cache.NewCache(rdb)
+	service := shortener.NewService(store, cfg.CodeLength, cache)
 
 	h := httpapi.NewHandler(service)
 
