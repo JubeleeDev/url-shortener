@@ -37,5 +37,7 @@ func (c *Cache) Set(ctx context.Context, code string, url string, ttl int) error
 }
 
 func (c *Cache) Delete(ctx context.Context, code string) error {
-	return nil
+	key := applicationKey + code
+	_, err := c.client.Del(ctx, key).Result()
+	return err
 }

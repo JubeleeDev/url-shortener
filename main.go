@@ -2,8 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/JubeleeDev/url-shortener/db"
 	"github.com/JubeleeDev/url-shortener/internal/cache"
@@ -35,8 +40,16 @@ func main() {
 		Password: "",               // No password by default
 		DB:       0,                // Use default database ID 0
 	})
-	cache := cache.NewCache(rdb)
-	service := shortener.NewService(store, cfg.CodeLength, cache)
+	defer rdb.Close()
+	_, err = rdb.Ping(context.Background()).Result()
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	linkCache := cache.NewCache(rdb)
+	service := shortener.NewService(store, cfg.CodeLength, linkCache)
 
 	h := httpapi.NewHandler(service)
 
@@ -46,9 +59,42 @@ func main() {
 	mux.HandleFunc("GET /api/links/{code}", h.GetLink)
 	mux.HandleFunc("GET /{code}", h.Redirect)
 
-	fmt.Println("server is running at", cfg.HTTPAddr)
-	err = http.ListenAndServe(cfg.HTTPAddr, mux)
-	if err != nil {
-		fmt.Println("unexpected error:", err)
+	server := &http.Server{
+		Addr:    cfg.HTTPAddr,
+		Handler: mux,
 	}
+
+	ch := make(chan error, 1)
+
+	go func() {
+		fmt.Println("server is running at", cfg.HTTPAddr)
+		ch <- server.ListenAndServe()
+	}()
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	select {
+	case err := <-ch:
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Printf("Server listen error: %v\n", err)
+		}
+		return
+	case <-ctx.Done():
+		log.Println("Shutdown signal received. Starting graceful termination...")
+	}
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Printf("Server shutdown error: %v\n", err)
+	}
+
+	if err := <-ch; err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Printf("Server listen error: %v", err)
+	}
+
+	log.Println("Server exited cleanly.")
+
 }
