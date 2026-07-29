@@ -36,7 +36,7 @@ func (h *Handler) CreateLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	link, err := h.service.CreateLink(req.URL)
+	link, err := h.service.CreateLink(r.Context(), req.URL)
 
 	if err != nil {
 		if errors.Is(err, shortener.ErrInvalidURL) {
@@ -71,11 +71,19 @@ func (h *Handler) GetLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	link, ok := h.service.GetLink(code)
+	link, err := h.service.GetLink(r.Context(), code)
 
-	if !ok {
-		http.Error(w, "link not found", http.StatusNotFound)
-		return
+	if err != nil {
+		if errors.Is(err, shortener.ErrInvalidCodeLength) {
+			http.Error(w, "invalid code length", http.StatusInternalServerError)
+			return
+		} else if errors.Is(err, shortener.ErrNotFound) {
+			http.Error(w, "link not found", http.StatusNotFound)
+			return
+		} else {
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	resp := linkResponse{
@@ -97,11 +105,19 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	link, ok := h.service.GetLink(code)
+	link, err := h.service.GetLink(r.Context(), code)
 
-	if !ok {
-		http.Error(w, "link not found", http.StatusNotFound)
-		return
+	if err != nil {
+		if errors.Is(err, shortener.ErrInvalidCodeLength) {
+			http.Error(w, "invalid code length", http.StatusInternalServerError)
+			return
+		} else if errors.Is(err, shortener.ErrNotFound) {
+			http.Error(w, "link not found", http.StatusNotFound)
+			return
+		} else {
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	http.Redirect(w, r, link.OriginalURL, http.StatusFound)

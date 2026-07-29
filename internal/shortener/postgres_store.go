@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -19,6 +20,15 @@ func NewPostgresStore(pool *pgxpool.Pool) *PostgresStore {
 func (ps *PostgresStore) Save(ctx context.Context, link Link) error {
 	query := `INSERT INTO links (code, original_url) VALUES ($1, $2)`
 	_, err := ps.pool.Exec(ctx, query, link.Code, link.OriginalURL)
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" {
+				return ErrUniqueConflict
+			}
+		}
+	}
 
 	return err
 }

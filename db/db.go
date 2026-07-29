@@ -2,18 +2,20 @@ package db
 
 import (
 	"context"
-	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func Connect() error {
-	dbpool, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
+func Connect(ctx context.Context, dsn string) (*pgxpool.Pool, error) {
+	dbpool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	defer dbpool.Close()
+	if err = dbpool.Ping(ctx); err != nil {
+		dbpool.Close()
+		return nil, err
+	}
 
-	return nil
+	return dbpool, nil
 }

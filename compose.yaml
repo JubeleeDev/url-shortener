@@ -6,10 +6,14 @@ services:
     environment:
       - HTTP_ADDR=:8080
       - CODE_LENGTH=15
+    env_file:
+      - .env
     ports:
       - "8080:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      
   db:
     image: postgres:16
     env_file:
@@ -18,5 +22,10 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 volumes:
   pgdata:

@@ -2,6 +2,7 @@ package shortener
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 )
@@ -20,6 +21,8 @@ func NewService(store Store, codeLen int) *Service {
 	return &Service{store: store, codeLength: codeLen}
 }
 
+const maxSaveRetries = 5
+
 func (s *Service) CreateLink(ctx context.Context, originalUrl string) (*Link, error) {
 
 	u, err := url.ParseRequestURI(originalUrl)
@@ -35,20 +38,29 @@ func (s *Service) CreateLink(ctx context.Context, originalUrl string) (*Link, er
 		return nil, ErrInvalidURL
 	}
 
-	link, err := NewLink(originalUrl, s.codeLength)
+	for i := 1; i <= maxSaveRetries; i++ {
 
-	if err != nil {
-		return nil, err
+		link, err := NewLink(originalUrl, s.codeLength)
+
+		if err != nil {
+			return nil, err
+		}
+
+		err = s.store.Save(ctx, link)
+
+		if err != nil {
+			if errors.Is(err, ErrUniqueConflict) {
+				if i == maxSaveRetries {
+					return nil, fmt.Errorf("save code error: %w", ErrUniqueConflict)
+				}
+				continue
+			}
+			return nil, err
+		}
+		return &link, nil
 	}
 
-	err = s.store.Save(ctx, link)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &link, nil
-
+	return nil, fmt.Errorf("save code error: %w", ErrUniqueConflict)
 }
 
 func (s *Service) GetLink(ctx context.Context, code string) (*Link, error) {

@@ -17,6 +17,11 @@ func NewMemoryStore() *MemoryStore {
 func (s *MemoryStore) Save(ctx context.Context, link Link) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if _, ok := s.links[link.Code]; ok {
+		return ErrUniqueConflict
+	}
+
 	s.links[link.Code] = link
 	return nil
 }

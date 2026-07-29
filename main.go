@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
+	"github.com/JubeleeDev/url-shortener/db"
 	"github.com/JubeleeDev/url-shortener/internal/config"
 	"github.com/JubeleeDev/url-shortener/internal/httpapi"
 	"github.com/JubeleeDev/url-shortener/internal/shortener"
@@ -15,7 +17,17 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	store := shortener.NewMemoryStore()
+	pool, err := db.Connect(context.Background(), cfg.DSN)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	defer pool.Close()
+
+	// store := shortener.NewMemoryStore()
+	store := shortener.NewPostgresStore(pool)
 	service := shortener.NewService(store, cfg.CodeLength)
 
 	h := httpapi.NewHandler(service)

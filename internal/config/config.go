@@ -9,6 +9,7 @@ import (
 type Config struct {
 	HTTPAddr   string
 	CodeLength int
+	DSN        string
 }
 
 func Load() (Config, error) {
@@ -31,5 +32,10 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("invalid code length")
 	}
 
-	return Config{CodeLength: codeLength, HTTPAddr: addr}, nil
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		return Config{}, fmt.Errorf("DATABASE_URL is empty")
+	}
+
+	return Config{CodeLength: codeLength, HTTPAddr: addr, DSN: dsn}, nil
 }

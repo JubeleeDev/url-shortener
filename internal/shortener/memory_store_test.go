@@ -35,7 +35,7 @@ func TestMemoryStoreFindLinkByUnknownCode(t *testing.T) {
 
 	_, err := store.Find(t.Context(), "missing")
 
-	if err != nil {
+	if err == nil {
 		t.Error("expected error, got link")
 	}
 }
