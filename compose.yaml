@@ -11,12 +11,69 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
     stop_grace_period: 15s
-      
+    
+  migrate:
+    image: ghcr.io/kukymbr/goose-docker:3.27.2
+    volumes:
+      - ./migrations:/migrations
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+  kafka:
+    image: confluentinc/cp-kafka:7.8.0
+    ports:
+      # наружу только EXTERNAL
+      - "9094:9094"
+    volumes:
+      - kafkadata:/var/lib/kafka/data
+    environment:
+      CLUSTER_ID: "4L62ydgwcQ_E_5BCH665_Ax"  # свой стабильный id; не меняй без смены volume
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+
+      # кто голосует в KRaft (host = имя сервиса в compose)
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
+      # где брокер СЛУШАЕТ (bind)
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:9094,CONTROLLER://0.0.0.0:9093
+
+      # что брокер ОТДАЁТ клиентам (advertised) — без CONTROLLER
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9094
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    healthcheck:
+      # изнутри контейнера — internal listener
+      test: ["CMD-SHELL", "kafka-topics.sh --list --bootstrap-server localhost:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  kafka-ui:
+    image: kafbat/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8081:8080"
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+      KAFKA_CLUSTERS_0_NAME: 'local-kraft'
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: 'kafka:9092'
+    depends_on:
+      - kafka
   db:
     image: postgres:16
     env_file:
@@ -43,3 +100,4 @@ services:
 volumes:
   pgdata:
   redisdata:
+  kafkadata:

@@ -3,6 +3,7 @@ package httpapi
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/JubeleeDev/url-shortener/internal/shortener"
@@ -43,9 +44,15 @@ func (h *Handler) CreateLink(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "invalid url", http.StatusBadRequest)
 			return
 		} else if errors.Is(err, shortener.ErrInvalidCodeLength) {
+			slog.Error("create link failed",
+				"request_id", requestIDFromContext(r.Context()),
+				"error", err)
 			http.Error(w, "invalid code length", http.StatusInternalServerError)
 			return
 		} else {
+			slog.Error("create link failed",
+				"request_id", requestIDFromContext(r.Context()),
+				"error", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -75,12 +82,20 @@ func (h *Handler) GetLink(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		if errors.Is(err, shortener.ErrInvalidCodeLength) {
+			slog.Error("get link failed",
+				"request_id", requestIDFromContext(r.Context()),
+				"code", code,
+				"error", err)
 			http.Error(w, "invalid code length", http.StatusInternalServerError)
 			return
 		} else if errors.Is(err, shortener.ErrNotFound) {
 			http.Error(w, "link not found", http.StatusNotFound)
 			return
 		} else {
+			slog.Error("get link failed",
+				"request_id", requestIDFromContext(r.Context()),
+				"code", code,
+				"error", err)
 			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
@@ -109,12 +124,20 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		if errors.Is(err, shortener.ErrInvalidCodeLength) {
+			slog.Error("redirect failed",
+				"request_id", requestIDFromContext(r.Context()),
+				"code", code,
+				"error", err)
 			http.Error(w, "invalid code length", http.StatusInternalServerError)
 			return
 		} else if errors.Is(err, shortener.ErrNotFound) {
 			http.Error(w, "link not found", http.StatusNotFound)
 			return
 		} else {
+			slog.Error("redirect failed",
+				"request_id", requestIDFromContext(r.Context()),
+				"code", code,
+				"error", err)
 			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}

@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -19,15 +19,20 @@ import (
 )
 
 func main() {
+
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{})
+	logger := slog.New(handler)
+	slog.SetDefault(logger)
+
 	cfg, err := config.Load()
 	if err != nil {
-		fmt.Println(err)
+		slog.Error("Config load", "error", err)
 		return
 	}
 	pool, err := db.Connect(context.Background(), cfg.DSN)
 
 	if err != nil {
-		fmt.Println(err)
+		slog.Error("Database connect", "error", err)
 		return
 	}
 
@@ -36,15 +41,15 @@ func main() {
 	// store := shortener.NewMemoryStore()
 	store := shortener.NewPostgresStore(pool)
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     cfg.RedisAddress, // Redis server address
-		Password: "",               // No password by default
-		DB:       0,                // Use default database ID 0
+		Addr:     cfg.RedisAddress,
+		Password: "",
+		DB:       0,
 	})
 	defer rdb.Close()
 	_, err = rdb.Ping(context.Background()).Result()
 
 	if err != nil {
-		fmt.Println(err)
+		slog.Error("RDB ping", "error", err)
 		return
 	}
 
@@ -61,13 +66,13 @@ func main() {
 
 	server := &http.Server{
 		Addr:    cfg.HTTPAddr,
-		Handler: mux,
+		Handler: httpapi.RequestID(httpapi.Logging(mux)),
 	}
 
 	ch := make(chan error, 1)
 
 	go func() {
-		fmt.Println("server is running at", cfg.HTTPAddr)
+		slog.Info("Running", "address", cfg.HTTPAddr)
 		ch <- server.ListenAndServe()
 	}()
 
@@ -77,24 +82,24 @@ func main() {
 	select {
 	case err := <-ch:
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Printf("Server listen error: %v\n", err)
+			slog.Error("Listen", "error", err)
 		}
 		return
 	case <-ctx.Done():
-		log.Println("Shutdown signal received. Starting graceful termination...")
+		slog.Info("Shutdown signal received. Starting graceful termination...")
 	}
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
-		log.Printf("Server shutdown error: %v\n", err)
+		slog.Error("Shutdown", "error", err)
 	}
 
 	if err := <-ch; err != nil && !errors.Is(err, http.ErrServerClosed) {
-		log.Printf("Server listen error: %v", err)
+		slog.Error("Listen after shutdown", "error", err)
 	}
 
-	log.Println("Server exited cleanly.")
+	slog.Info("Exited cleanly.")
 
 }
